@@ -1,0 +1,9 @@
+/*
+ * Base styles
+ */
+
+body {
+  background: #f9f9f9;
+  font-family: 'Roboto', sans-serif;
+  padding: 1rem 0;
+}
