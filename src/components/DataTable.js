@@ -12,8 +12,26 @@ export default function DataTable({
   rowsPerPage,
   handleChangePage,
   handleChangeRowsPerPage,
+  search,
 }) {
-  const rows = users.slice(
+  // First, get users data from props
+  let rows = users;
+
+  // If there's at least 3 chars at search bar, filter the array
+  // Will stay as it is if nothing is searched
+  if (search.length >= 3) {
+    const s = search.toLowerCase();
+    rows = users.filter(
+      (user) =>
+        user.username.toLowerCase().includes(s) ||
+        user.fullname.toLowerCase().includes(s) ||
+        user.email.toLowerCase().includes(s) ||
+        user.address.toLowerCase().includes(s)
+    );
+  }
+
+  // Return a new, paginated array, which will show at the table
+  const paginatedRows = rows.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
@@ -35,7 +53,7 @@ export default function DataTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((user) => (
+            {paginatedRows.map((user) => (
               <TableRow key={user._id}>
                 <TableCell>{user._id}</TableCell>
                 <TableCell>{user.username}</TableCell>
@@ -55,7 +73,7 @@ export default function DataTable({
       <TablePagination
         rowsPerPageOptions={[5, 10, 20]}
         component="nav"
-        count={users.length}
+        count={rows.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onChangePage={handleChangePage}

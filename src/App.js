@@ -20,6 +20,9 @@ function App() {
   const classes = useStyles();
 
   const [users, setUsers] = useState([]);
+
+  const [search, setSearch] = useState('');
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -30,6 +33,15 @@ function App() {
         setUsers(data);
       });
   }, []);
+
+  const handleChangeSearch = (event) => {
+    setSearch(event.target.value);
+
+    // Prevent pagination to show a page that doesn't exist
+    if (event.target.value.length >= 3) {
+      setPage(0);
+    }
+  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -44,13 +56,14 @@ function App() {
     <Container>
       <Card className={classes.card} variant="outlined">
         <Header />
-        <Search />
+        <Search search={search} handleChangeSearch={handleChangeSearch} />
         <DataTable
           users={users}
           page={page}
           rowsPerPage={rowsPerPage}
           handleChangePage={handleChangePage}
           handleChangeRowsPerPage={handleChangeRowsPerPage}
+          search={search}
         />
       </Card>
     </Container>
