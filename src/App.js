@@ -20,6 +20,8 @@ function App() {
   const classes = useStyles();
 
   const [users, setUsers] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     fetch('https://dyn-crud.herokuapp.com/api/users/')
@@ -29,12 +31,27 @@ function App() {
       });
   }, []);
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   return (
     <Container>
       <Card className={classes.card} variant="outlined">
         <Header />
         <Search />
-        <DataTable users={users} />
+        <DataTable
+          users={users}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          handleChangePage={handleChangePage}
+          handleChangeRowsPerPage={handleChangeRowsPerPage}
+        />
       </Card>
     </Container>
   );
