@@ -70,7 +70,7 @@ function App() {
       method: 'DELETE',
     }).then(() => {
       setUsers((users) => users.filter((u) => u._id !== user._id));
-      if (users.length < (page + 1) * rowsPerPage) {
+      if (users.length === page * rowsPerPage + 1) {
         setPage((current) => current - 1);
       }
     });
