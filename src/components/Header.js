@@ -4,7 +4,7 @@ import Typography from '@material-ui/core/Typography';
 
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
 
-export default function Header() {
+export default function Header({ onButtonClick }) {
   return (
     <Box display="flex" justifyContent="space-between" mb={2}>
       <Box>
@@ -21,6 +21,7 @@ export default function Header() {
           variant="contained"
           color="primary"
           startIcon={<PersonAddIcon />}
+          onClick={(event) => onButtonClick(event, null)}
         >
           New Record
         </Button>

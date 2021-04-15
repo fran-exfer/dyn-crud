@@ -9,6 +9,7 @@ import { makeStyles } from '@material-ui/styles';
 import Header from './components/Header';
 import Search from './components/Search';
 import DataTable from './components/DataTable';
+import UserDialog from './components/UserDialog';
 
 const useStyles = makeStyles({
   card: {
@@ -25,6 +26,9 @@ function App() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogUser, setDialogUser] = useState(null);
 
   useEffect(() => {
     fetch('https://dyn-crud.herokuapp.com/api/users/')
@@ -52,10 +56,30 @@ function App() {
     setPage(0);
   };
 
+  const handleNewDialog = (event, user) => {
+    setDialogUser(user);
+    setDialogOpen(true);
+  };
+
+  const handleCancelDialog = (event) => {
+    setDialogOpen(false);
+  };
+
+  const handleDelete = (event, user) => {
+    fetch(`https://dyn-crud.herokuapp.com/api/users/${user._id}`, {
+      method: 'DELETE',
+    }).then(() => {
+      setUsers((users) => users.filter((u) => u._id !== user._id));
+      if (users.length < (page + 1) * rowsPerPage) {
+        setPage((current) => current - 1);
+      }
+    });
+  };
+
   return (
     <Container>
       <Card className={classes.card} variant="outlined">
-        <Header />
+        <Header onButtonClick={handleNewDialog} />
         <Search search={search} handleChangeSearch={handleChangeSearch} />
         <DataTable
           users={users}
@@ -63,9 +87,20 @@ function App() {
           rowsPerPage={rowsPerPage}
           handleChangePage={handleChangePage}
           handleChangeRowsPerPage={handleChangeRowsPerPage}
+          handleNewDialog={handleNewDialog}
+          handleDelete={handleDelete}
           search={search}
         />
       </Card>
+
+      <UserDialog
+        dialogOpen={dialogOpen}
+        handleCancelDialog={handleCancelDialog}
+        user={dialogUser}
+        users={users}
+        setUsers={setUsers}
+        setDialogOpen={setDialogOpen}
+      />
     </Container>
   );
 }

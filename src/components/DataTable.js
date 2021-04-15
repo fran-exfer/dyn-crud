@@ -6,12 +6,18 @@ import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import TablePagination from '@material-ui/core/TablePagination';
 
+import IconButton from '@material-ui/core/IconButton';
+import EditIcon from '@material-ui/icons/Edit';
+import DeleteIcon from '@material-ui/icons/Delete';
+
 export default function DataTable({
   users,
   page,
   rowsPerPage,
   handleChangePage,
   handleChangeRowsPerPage,
+  handleNewDialog,
+  handleDelete,
   search,
 }) {
   // First, get users data from props
@@ -64,7 +70,22 @@ export default function DataTable({
                   {new Date(user.registrationDate).toLocaleString('en-GB')}
                 </TableCell>
                 <TableCell>{user.status}</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>
+                  <IconButton
+                    aria-label="edit"
+                    size="small"
+                    onClick={(event) => handleNewDialog(event, user)}
+                  >
+                    <EditIcon fontSize="inherit" />
+                  </IconButton>
+                  <IconButton
+                    aria-label="delete"
+                    size="small"
+                    onClick={(event) => handleDelete(event, user)}
+                  >
+                    <DeleteIcon fontSize="inherit" />
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
