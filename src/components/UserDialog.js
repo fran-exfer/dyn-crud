@@ -1,5 +1,8 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useContext, useEffect } from 'react';
+
+import AppContext from '../utils/AppContext';
+import * as api from '../utils/api';
 
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -14,14 +17,11 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 
-export default function UserDialog({
-  dialogOpen,
-  handleCancelDialog,
-  user,
-  users,
-  setUsers,
-  setDialogOpen,
-}) {
+export default function UserDialog() {
+  const [state, dispatch] = useContext(AppContext);
+  const { dialogCurrentUser } = state;
+
+  // This is a controlled form.
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [fullname, setFullname] = useState('');
@@ -34,12 +34,12 @@ export default function UserDialog({
    * should pass it either a user or a falsy value (such as null).
    */
   useEffect(() => {
-    if (user) {
-      setUsername(user.username);
-      setEmail(user.email);
-      setFullname(user.fullname);
-      setAddress(user.address);
-      setStatus(user.status);
+    if (dialogCurrentUser) {
+      setUsername(dialogCurrentUser.username);
+      setEmail(dialogCurrentUser.email);
+      setFullname(dialogCurrentUser.fullname);
+      setAddress(dialogCurrentUser.address);
+      setStatus(dialogCurrentUser.status);
     } else {
       setUsername('');
       setEmail('');
@@ -47,9 +47,12 @@ export default function UserDialog({
       setAddress('');
       setStatus('pending');
     }
-  }, [user]);
+  }, [dialogCurrentUser]);
 
-  const handleSubmit = (event) => {
+  /*
+   * On submit, create a new user or edit an existing user.
+   */
+  const handleSubmit = () => {
     const body = JSON.stringify({
       username,
       fullname,
@@ -58,38 +61,38 @@ export default function UserDialog({
       status,
     });
 
-    if (user) {
+    if (dialogCurrentUser) {
       // Editing an existing user
-      fetch(`https://dyn-crud.herokuapp.com/api/users/${user._id}`, {
-        method: 'PUT',
-        body,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((res) => res.json())
-        .then((data) =>
-          setUsers(users.map((u, index) => (u._id === data._id ? data : u)))
-        );
+      api
+        .updateUser(dialogCurrentUser, body)
+        .then((user) => dispatch({ type: 'users/update', user }))
+        .catch((error) => console.error(error.message));
     } else {
       // Adding a user
-      fetch(`https://dyn-crud.herokuapp.com/api/users`, {
-        method: 'POST',
-        body,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setUsers([...users, data]));
+      api
+        .createUser(body)
+        .then((user) => dispatch({ type: 'users/create', user }))
+        .catch((error) => console.error(error.message));
     }
-    setDialogOpen(false);
+    dispatch({ type: 'dialog/close' });
   };
 
+  /*
+   * Close handler
+   */
+  const handleClose = () => {
+    dispatch({ type: 'dialog/close' });
+  };
+
+  /*
+   * Render
+   */
   return (
-    <Dialog open={dialogOpen} onClose={handleCancelDialog}>
+    <Dialog open={state.isDialogOpen} onClose={handleClose}>
       <DialogTitle>
-        {user ? `Edit user "${user.username}"` : 'Add new user'}
+        {dialogCurrentUser
+          ? `Edit user "${dialogCurrentUser.username}"`
+          : 'Add new user'}
       </DialogTitle>
       <DialogContent>
         <Box display="flex" mb={1}>
@@ -152,7 +155,7 @@ export default function UserDialog({
         </FormControl>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancelDialog} color="primary">
+        <Button onClick={handleClose} color="primary">
           Cancel
         </Button>
         <Button onClick={handleSubmit} color="primary">

@@ -1,15 +1,19 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useReducer, useEffect } from 'react';
 
-import Container from '@material-ui/core/Container';
-import Card from '@material-ui/core/Card';
-
-import { makeStyles } from '@material-ui/styles';
+import * as api from './utils/api';
+import appReducer from './utils/appReducer';
+import AppContext from './utils/AppContext';
 
 import Header from './components/Header';
 import Search from './components/Search';
 import DataTable from './components/DataTable';
 import UserDialog from './components/UserDialog';
+
+import Container from '@material-ui/core/Container';
+import Card from '@material-ui/core/Card';
+
+import { makeStyles } from '@material-ui/styles';
 
 const useStyles = makeStyles({
   card: {
@@ -20,88 +24,50 @@ const useStyles = makeStyles({
 function App() {
   const classes = useStyles();
 
-  const [users, setUsers] = useState([]);
+  /*
+   * A reducer lets us abstract a lot of logic into more readable
+   * and mantainable actions. We'll pass the state dispatch function
+   * across our app with React's Context API.
+   */
+  const [state, dispatch] = useReducer(appReducer, {
+    users: [],
+    loading: true,
+    error: null,
+    page: 0,
+    rowsPerPage: 10,
+    search: '',
+    isDialogOpen: false,
+    dialogCurrentUser: null,
+  });
 
-  const [search, setSearch] = useState('');
-
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogUser, setDialogUser] = useState(null);
-
+  /*
+   * On app load, and only on load, fetch all users and store them
+   * in the state.
+   */
   useEffect(() => {
-    fetch('https://dyn-crud.herokuapp.com/api/users/')
-      .then((res) => res.json())
-      .then((data) => {
-        setUsers(data);
-      });
+    api
+      .getAllUsers()
+      .then((fetchedUsers) =>
+        dispatch({
+          type: 'users/firstLoad',
+          fetchedUsers,
+        })
+      )
+      .catch((error) => console.error(error.message));
   }, []);
 
-  const handleChangeSearch = (event) => {
-    setSearch(event.target.value);
-
-    // Prevent pagination to show a page that doesn't exist
-    if (event.target.value.length >= 3) {
-      setPage(0);
-    }
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleNewDialog = (event, user) => {
-    setDialogUser(user);
-    setDialogOpen(true);
-  };
-
-  const handleCancelDialog = (event) => {
-    setDialogOpen(false);
-  };
-
-  const handleDelete = (event, user) => {
-    fetch(`https://dyn-crud.herokuapp.com/api/users/${user._id}`, {
-      method: 'DELETE',
-    }).then(() => {
-      setUsers((users) => users.filter((u) => u._id !== user._id));
-      if (users.length === page * rowsPerPage + 1) {
-        setPage((current) => current - 1);
-      }
-    });
-  };
-
   return (
-    <Container>
-      <Card className={classes.card} variant="outlined">
-        <Header onButtonClick={handleNewDialog} />
-        <Search search={search} handleChangeSearch={handleChangeSearch} />
-        <DataTable
-          users={users}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          handleChangePage={handleChangePage}
-          handleChangeRowsPerPage={handleChangeRowsPerPage}
-          handleNewDialog={handleNewDialog}
-          handleDelete={handleDelete}
-          search={search}
-        />
-      </Card>
+    <AppContext.Provider value={[state, dispatch]}>
+      <Container>
+        <Card className={classes.card} variant="outlined">
+          <Header />
+          <Search />
+          <DataTable />
+        </Card>
 
-      <UserDialog
-        dialogOpen={dialogOpen}
-        handleCancelDialog={handleCancelDialog}
-        user={dialogUser}
-        users={users}
-        setUsers={setUsers}
-        setDialogOpen={setDialogOpen}
-      />
-    </Container>
+        <UserDialog />
+      </Container>
+    </AppContext.Provider>
   );
 }
 

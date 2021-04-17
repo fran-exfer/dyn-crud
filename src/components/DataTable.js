@@ -1,3 +1,9 @@
+import * as React from 'react';
+import { useContext } from 'react';
+import AppContext from '../utils/AppContext';
+
+import * as api from '../utils/api';
+
 import TableContainer from '@material-ui/core/TableContainer';
 import Table from '@material-ui/core/Table';
 import TableHead from '@material-ui/core/TableHead';
@@ -10,37 +16,58 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 
-export default function DataTable({
-  users,
-  page,
-  rowsPerPage,
-  handleChangePage,
-  handleChangeRowsPerPage,
-  handleNewDialog,
-  handleDelete,
-  search,
-}) {
-  // First, get users data from props
-  let rows = users;
+export default function DataTable() {
+  const [state, dispatch] = useContext(AppContext);
+  let rows;
 
   // If there's at least 3 chars at search bar, filter the array
   // Will stay as it is if nothing is searched
-  if (search.length >= 3) {
-    const s = search.toLowerCase();
-    rows = users.filter(
+  if (state.search.length >= 3) {
+    const s = state.search.toLowerCase();
+    rows = state.users.filter(
       (user) =>
         user.username.toLowerCase().includes(s) ||
         user.fullname.toLowerCase().includes(s) ||
         user.email.toLowerCase().includes(s) ||
         user.address.toLowerCase().includes(s)
     );
+  } else {
+    // If not, just make a copy of the users array
+    rows = state.users;
   }
 
   // Return a new, paginated array, which will show at the table
   const paginatedRows = rows.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+    state.page * state.rowsPerPage,
+    state.page * state.rowsPerPage + state.rowsPerPage
   );
+
+  /*
+   * Table navigation handlers
+   */
+  const handleChangePage = (event, newPage) => {
+    dispatch({ type: 'pagination/changePage', newPage });
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    dispatch({
+      type: 'pagination/changeRowsPerPage',
+      newRowsPerPage: parseInt(event.target.value, 10),
+    });
+  };
+
+  /*
+   * User row action handlers
+   */
+  const handleEditUser = (event, user) => {
+    dispatch({ type: 'dialog/edit', user });
+  };
+
+  const handleDeleteUser = (event, user) => {
+    api.deleteUser(user).then(() => {
+      dispatch({ type: 'users/delete', user });
+    });
+  };
 
   return (
     <>
@@ -74,14 +101,14 @@ export default function DataTable({
                   <IconButton
                     aria-label="edit"
                     size="small"
-                    onClick={(event) => handleNewDialog(event, user)}
+                    onClick={(event) => handleEditUser(event, user)}
                   >
                     <EditIcon fontSize="inherit" />
                   </IconButton>
                   <IconButton
                     aria-label="delete"
                     size="small"
-                    onClick={(event) => handleDelete(event, user)}
+                    onClick={(event) => handleDeleteUser(event, user)}
                   >
                     <DeleteIcon fontSize="inherit" />
                   </IconButton>
@@ -95,8 +122,8 @@ export default function DataTable({
         rowsPerPageOptions={[5, 10, 20]}
         component="nav"
         count={rows.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
+        rowsPerPage={state.rowsPerPage}
+        page={state.page}
         onChangePage={handleChangePage}
         onChangeRowsPerPage={handleChangeRowsPerPage}
       />

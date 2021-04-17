@@ -1,10 +1,19 @@
+import * as React from 'react';
+import { useContext } from 'react';
+
+import AppContext from '../utils/AppContext';
+
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 
 import PersonAddIcon from '@material-ui/icons/PersonAdd';
 
-export default function Header({ onButtonClick }) {
+export default function Header() {
+  const [, dispatch] = useContext(AppContext);
+
+  const handleClick = () => dispatch({ type: 'dialog/new' });
+
   return (
     <Box display="flex" justifyContent="space-between" mb={2}>
       <Box>
@@ -21,7 +30,7 @@ export default function Header({ onButtonClick }) {
           variant="contained"
           color="primary"
           startIcon={<PersonAddIcon />}
-          onClick={(event) => onButtonClick(event, null)}
+          onClick={handleClick}
         >
           New Record
         </Button>
